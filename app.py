@@ -43,7 +43,7 @@ class Item(Resource):
 
     data = Item.parser.parse_args()
     # data = request.get_json()   # get_json(force=True) means, we don't need a content type header
-    item = {                    # flask will look into the content, and format the data.
+    item = {                      # flask will look into the content, and format the data.
       "name": name,
       "price": data["price"]
     }
