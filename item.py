@@ -13,6 +13,7 @@ class Item(Resource):
     help="This field cannot be blank"
   )
   
+  # HELPER METHODS----------------------------
   # searches the database for items using name
   @classmethod
   def find_item_by_name(cls, name):
@@ -45,6 +46,20 @@ class Item(Resource):
     connection.commit()
     connection.close()
 
+
+  @classmethod
+  def update(cls, item):
+    connection = sqlite3.connect("./test/data.db")
+    cursor = connection.cursor()
+
+    query = "UPDATE items SET price=? WHERE name=?"
+    cursor.execute(query, (item["price"], item["name"]))
+
+    connection.commit()
+    connection.close()
+  
+  # HELPER METHODS----------------------------X
+
   # TO GET ITEM WITH NAME
   @jwt_required()
   def get(self, name):
@@ -70,11 +85,12 @@ class Item(Resource):
     try:
       self.insert(item)
     except:
-      return {"messege": "An error occured."}
+      return {"messege": "An error occured."}, 500
     
     return item, 201  # 201 is for CREATED status
 
   # TO DELETE AN ITEM
+  @jwt_required()
   def delete(self, name):
     # check if there exists any item by name: "name"
     # if exists then delete it
@@ -96,18 +112,26 @@ class Item(Resource):
   def put(self, name):
     data = Item.parser.parse_args()
     # data = request.get_json()
-    item = next(filter(lambda x: x["name"] == name ,items), None)
+    item = self.find_item_by_name(name)
+
+    updated_item = {
+      "name": name,
+      "price": data["price"]
+    }
     # if item is not available, add it
     if item is None:
-      item = {
-        "name": name,
-        "price": data["price"]
-      }
-      items.append(item)
+      try:
+        self.insert(updated_item)
+      except:
+        return {"message": "An error occured while inserting."}, 500
     # if item exists, update it
     else:
-      item.update(data)
-    return item
+      try:
+        self.update(updated_item)
+      except:
+        return {"message": "An error occured while updating."}, 500
+
+    return updated_item
 
 
 class ItemList(Resource):
@@ -122,6 +146,5 @@ class ItemList(Resource):
     for row in cursor.execute(query):
       items.append({"name": row[0], "price": row[1]})
 
-    connection.commit()
     connection.close()
     return {"items": items}
