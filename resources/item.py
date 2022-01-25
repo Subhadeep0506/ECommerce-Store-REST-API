@@ -14,6 +14,11 @@ class Item(Resource):
     required=True,
     help="This field cannot be blank"
   )
+  parser.add_argument("store_id",
+    type=int,
+    required=True,
+    help="Every item needs a store id."
+  )
 
   # TO GET ITEM WITH NAME
   @jwt_required()
@@ -32,10 +37,10 @@ class Item(Resource):
 
     data = Item.parser.parse_args()
     # data = request.get_json()   # get_json(force=True) means, we don't need a content type header
-    item = ItemModel(name, data["price"])
+    item = ItemModel(name, **data)
 
     try:
-      item.insert()
+      item.save_to_database()
     except:
       return {"messege": "An error occured."}, 500
     
@@ -44,17 +49,9 @@ class Item(Resource):
   # TO DELETE AN ITEM
   @jwt_required()
   def delete(self, name):
-    # check if there exists any item by name: "name"
-    # if exists then delete it
-    if ItemModel.find_item_by_name(name):
-      connection = sqlite3.connect("./test/data.db")
-      cursor = connection.cursor()
-
-      query = "DELETE FROM items WHERE name=?"
-      cursor.execute(query, (name,))
-
-      connection.commit()
-      connection.close()
+    item = ItemModel.find_item_by_name(name)
+    if item:
+      item.delete_from_database()
       return {"messege": "Item deleted"}
 
     # if doesn't exist, skip deleting
@@ -66,34 +63,22 @@ class Item(Resource):
     # data = request.get_json()
     item = ItemModel.find_item_by_name(name)
 
-    updated_item = ItemModel(name, data["price"])
     # if item is not available, add it
     if item is None:
-      try:
-        updated_item.insert()
-      except:
-        return {"message": "An error occured while inserting."}, 500
+      item = ItemModel(name, **data)
     # if item exists, update it
     else:
-      try:
-        updated_item.update()
-      except:
-        return {"message": "An error occured while updating."}, 500
-
-    return updated_item.json()
+      item.price = data['price']
+      item.store_id = data['store_id']
+    
+    # whether item is changed or inserted, it has to be saved to db
+    item.save_to_database()
+    return item.json()
 
 
 class ItemList(Resource):
 
   # TO GET ALL ITEMS
   def get(self):
-    items = []
-    connection = sqlite3.connect("./test/data.db")
-    cursor = connection.cursor()
-
-    query = "SELECT * FROM items"
-    for row in cursor.execute(query):
-      items.append({"name": row[0], "price": row[1]})
-
-    connection.close()
-    return {"items": items}
+    # return {"item": list(map(lambda x: x.json(), ItemModel.query.all()))}
+    return {"items": [item.json() for item in ItemModel.query.all()]}

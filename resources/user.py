@@ -28,17 +28,7 @@ class UserRegister(Resource):
       # if exists, then don't add
       return {"message": "An user with that username already exists."}, 400
     
-    # else...continue
-    # 1. Connect to database
-    connection = sqlite3.connect('./test/data.db')
-    # 2. Create database cursor
-    cursor = connection.cursor()
-    # 3. SQL query to inser new useer information
-    query = "INSERT INTO users VALUES (NULL, ?, ?)"
-
-    cursor.execute(query, (data["username"], data["password"]))
-    # 4. Commit the changes and close the connection to database
-    connection.commit()
-    connection.close()
+    user = UserModel(**data)  # since parser only takes in username and password, only those two will be added.
+    user.save_to_database()
 
     return {"messege": "User added successfully."}, 201

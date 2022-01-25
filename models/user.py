@@ -1,44 +1,27 @@
 import sqlite3
+from database import db
 
-class UserModel:
+class UserModel(db.Model):
 
-  def __init__(self, _id, username, password):
-    self.id = _id
+  __tablename__ = "users"   # will be used to tell sqlalchemy the table name for users
+
+  # table columns for users table
+  id = db.Column(db.Integer, primary_key=True)
+  username = db.Column(db.String(80))
+  password = db.Column(db.String(80))
+
+  def __init__(self, username, password):
     self.username = username
     self.password = password
     
   @classmethod
   def find_by_username(cls, username):
-    connection = sqlite3.connect('./test/data.db')
-    cursor = connection.cursor()
-
-    query = "SELECT * FROM users WHERE username=?"
-    result = cursor.execute(query, (username,))   # parameters must be in the form of tuple.
-
-    row = result.fetchone()
-    if row:
-      # user = cls(row[0], row[1], row[2])
-      user = cls(*row)  # is similar to passing all values of row
-    else:
-      user = None
-
-    connection.close()
-    return user
+    return cls.query.filter_by(username=username).first()
 
   @classmethod
   def find_by_id(cls, _id):
-    connection = sqlite3.connect('./test/data.db')
-    cursor = connection.cursor()
+    return cls.query.filter_by(id=_id).first()
 
-    query = "SELECT * FROM users WHERE id=?"
-    result = cursor.execute(query, (_id,))   # parameters must be in the form of tuple.
-
-    row = result.fetchone()
-    if row:
-      # user = cls(row[0], row[1], row[2])
-      user = cls(*row)  # is similar to passing all values of row
-    else:
-      user = None
-
-    connection.close()
-    return user
+  def save_to_database(self):
+    db.session.add(self)
+    db.session.commit()
