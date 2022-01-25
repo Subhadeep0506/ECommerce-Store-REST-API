@@ -27,7 +27,7 @@ class Store(Resource):
     store = StoreModel.find_item_by_name(name)
     if store:
       store.delete_from_database()
-      return {"message": "store deleetd."}
+      return {"message": "store deleted."}
 
     return {"message": "store don't exist"}
 
