@@ -1,4 +1,4 @@
 Flask
 Flask-RESTful
-Flask-JWT
+Flask_-JWT-Extended
 Flask-SQLAlchemy

@@ -2,7 +2,7 @@ import sqlite3
 
 from flask import Flask, request
 from flask_restful import Resource, reqparse
-from flask_jwt import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 
 from models.item import ItemModel
 
@@ -49,6 +49,11 @@ class Item(Resource):
   # TO DELETE AN ITEM
   @jwt_required()
   def delete(self, name):
+    claims = get_jwt()
+
+    if not claims["is_admin"]:
+      return {"message": "Admin privilages required"}, 401
+
     item = ItemModel.find_item_by_name(name)
     if item:
       item.delete_from_database()
@@ -78,7 +83,17 @@ class Item(Resource):
 
 class ItemList(Resource):
 
-  # TO GET ALL ITEMS
+  @jwt_required(optional=True)
   def get(self):
-    # return {"item": list(map(lambda x: x.json(), ItemModel.query.all()))}
-    return {"items": [item.json() for item in ItemModel.query.all()]}
+    user_id = get_jwt_identity()
+    items = [item.json() for item in ItemModel.find_all()]
+
+    # if user id is given, then display full details
+    if user_id:
+      return {"items": items}, 200
+
+    # else display only item name
+    return {
+      "items": [Item["name"] for item in items],
+      "message": "Login to view more data."
+    }, 200

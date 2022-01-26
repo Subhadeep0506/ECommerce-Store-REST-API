@@ -14,7 +14,11 @@ class StoreModel(db.Model):    # tells SQLAlchemy that it is something that will
     self.name = name
 
   def json(self):
-    return {"id": self.id, "name": self.name, "items": [item.json() for item in self.items.all()]}
+    return {
+      "id": self.id, 
+      "name": self.name, 
+      "items": [item.json() for item in self.items.all()]
+    }
 
   # searches the database for items using name
   @classmethod
@@ -22,6 +26,10 @@ class StoreModel(db.Model):    # tells SQLAlchemy that it is something that will
     # return cls.query.filter_by(name=name) # SELECT name FROM __tablename__ WHERE name=name
     # this function would return a StoreModel object
     return cls.query.filter_by(name=name).first() # SELECT name FROM __tablename__ WHERE name=name LIMIT 1
+
+  @classmethod
+  def find_all(cls):
+    return cls.query.all()
 
   # method to insert or update an item into database
   def save_to_database(self):
