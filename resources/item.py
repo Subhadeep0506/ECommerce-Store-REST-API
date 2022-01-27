@@ -30,6 +30,7 @@ class Item(Resource):
     return {"message": "item not found."}, 404
 
   # TO POST AN ITEM
+  @jwt_required(fresh=True)
   def post(self, name):
     # if there already exists an item with "name", show a messege, and donot add the item
     if ItemModel.find_item_by_name(name):
@@ -94,6 +95,6 @@ class ItemList(Resource):
 
     # else display only item name
     return {
-      "items": [Item["name"] for item in items],
+      "items": [item["name"] for item in items],
       "message": "Login to view more data."
     }, 200

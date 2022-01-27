@@ -1,0 +1,1 @@
+BLACKLIST = {2, 3}  # user ids that will be denied access
