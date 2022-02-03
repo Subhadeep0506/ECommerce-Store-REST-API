@@ -81,7 +81,8 @@ class UserLogin(Resource):
       # create access and refresh tokens
       access_token = create_access_token(identity=user.id, fresh=True)  # here, identity=user.id is what identity() used to do previously
       refresh_token = create_refresh_token(identity=user.id)
-
+      print("user logged in")
+      
       return {
         "access_token": access_token,
         "refresh_token": refresh_token
