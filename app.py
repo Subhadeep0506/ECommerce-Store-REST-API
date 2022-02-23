@@ -37,6 +37,12 @@ def create_tables():
 # jwt = JWT(app, authenticate, identity)
 jwt = JWTManager(app)   # JwtManager links up to the application, doesn't create /auth point
 
+# below function returns True, if the token that is sent is in the blacklist
+@jwt.token_in_blocklist_loader
+def check_if_token_in_blacklist(jwt_header, jwt_data):
+  # print("Log Message:", jwt_data)
+  return jwt_data["jti"] in BLACKLIST
+
 @jwt.additional_claims_loader   # modifies the below function, and links it with JWTManager, which in turn is linked with our app
 def add_claims_to_jwt(identity):
   if identity == 1:   # insted of hardcoding this, we should read it from a config file or database
@@ -52,11 +58,6 @@ def expired_token_callback():
     "error": "token_expired"
   }), 401
 
-# below function returns True, if the token that is sent is in the blacklist
-@jwt.token_in_blocklist_loader
-def check_if_token_in_blacklist(jwt_header, jwt_data):
-  # print("Log Message:", jwt_data)
-  return jwt_data["jti"] in BLACKLIST
 
 @jwt.invalid_token_loader
 def invalid_token_callback(error):

@@ -1,5 +1,4 @@
-import sqlite3
-
+from typing import Dict
 from flask import Flask, request
 from flask_restful import Resource, reqparse
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
@@ -22,16 +21,16 @@ class Item(Resource):
 
   # TO GET ITEM WITH NAME
   @jwt_required()
-  def get(self, name):
+  def get(self, name: str) -> Dict:
     item = ItemModel.find_item_by_name(name)
     if item:
-      return item.json()
+      return item.json(), 200
     
     return {"message": "item not found."}, 404
 
   # TO POST AN ITEM
   @jwt_required(fresh=True)
-  def post(self, name):
+  def post(self, name: str):
     # if there already exists an item with "name", show a messege, and donot add the item
     if ItemModel.find_item_by_name(name):
       return {"messege": f"item {name} already exists"} ,400
@@ -49,7 +48,7 @@ class Item(Resource):
 
   # TO DELETE AN ITEM
   @jwt_required()
-  def delete(self, name):
+  def delete(self, name: str):
     claims = get_jwt()
 
     if not claims["is_admin"]:
@@ -64,7 +63,7 @@ class Item(Resource):
     return {"messege": "Item don't exist"}, 400
 
   # TO ADD OR UPDATE AN ITEM
-  def put(self, name):
+  def put(self, name: str):
     data = Item.parser.parse_args()
     # data = request.get_json()
     item = ItemModel.find_item_by_name(name)

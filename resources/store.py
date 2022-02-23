@@ -3,13 +3,13 @@ from models.store import StoreModel
 
 class Store(Resource):
 
-  def get(self, name):
-    store = StoreModel.find_item_by_name(name)
+  def get(self, name: str):
+    store = StoreModel.find_store_by_name(name)
     if store:
       return store.json()
 
-  def post(self, name):
-    if StoreModel.find_item_by_name(name):
+  def post(self, name: str):
+    if StoreModel.find_store_by_name(name):
       return {"message": "Store alrady exists."}, 400
 
     store = StoreModel(name)
@@ -23,8 +23,8 @@ class Store(Resource):
 
 
 
-  def delete(self, name):
-    store = StoreModel.find_item_by_name(name)
+  def delete(self, name: str):
+    store = StoreModel.find_store_by_name(name)
     if store:
       store.delete_from_database()
       return {"message": "store deleted."}

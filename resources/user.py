@@ -46,22 +46,22 @@ class UserRegister(Resource):
 class User(Resource):
 
   @classmethod
-  def get(cls, user_id):
+  def get(cls, user_id: int):
 
     user = UserModel.find_by_id(user_id)
     if not user:
       return {"message": "User not found."}, 404
   
-    return user.json()
+    return user.json(), 200
   
   @classmethod
-  def delete(cls, user_id):
+  def delete(cls, user_id: int):
     user = UserModel.find_by_id(user_id)
     if not user:
       return {"message": "User not found."}, 404
 
     user.delete_from_database()
-    return {"message": "User deleted."}
+    return {"message": "User deleted."}, 200
 
 
 class UserLogin(Resource):
