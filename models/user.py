@@ -1,5 +1,8 @@
-from typing import Dict
+from typing import Dict, Union
+
 from database import db
+
+UserJSON = Dict[str, Union[int, str]]
 
 class UserModel(db.Model):
 
@@ -14,15 +17,16 @@ class UserModel(db.Model):
     self.username = username
     self.password = password
     
-  def json(self) -> Dict:
-    return {"id": self.id, "name": self.username}
+  # json() function is no longer required when marshmallow is used
+  # def json(self) -> UserJSON:
+  #   return {"id": self.id, "name": self.username}
 
   @classmethod
-  def find_by_username(cls, username: str):
+  def find_by_username(cls, username: str) -> "UserModel":
     return cls.query.filter_by(username=username).first()
 
   @classmethod
-  def find_by_id(cls, _id: int):
+  def find_by_id(cls, _id: int) -> "UserModel":
     return cls.query.filter_by(id=_id).first()
 
   def save_to_database(self) -> None:

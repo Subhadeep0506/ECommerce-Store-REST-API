@@ -1,6 +1,9 @@
+from typing import Dict, List, Union
 
-from typing import Dict, List
 from database import db
+from models.item import ItemJSON
+
+StoreJSON = Dict[str, Union[int, str, List[ItemJSON]]]
 
 class StoreModel(db.Model):    # tells SQLAlchemy that it is something that will be saved to database and will be retrieved from database
 
@@ -15,7 +18,7 @@ class StoreModel(db.Model):    # tells SQLAlchemy that it is something that will
   def __init__(self, name: str):
     self.name = name
 
-  def json(self) -> Dict:
+  def json(self) -> StoreJSON:
     return {
       "id": self.id, 
       "name": self.name, 
@@ -24,13 +27,13 @@ class StoreModel(db.Model):    # tells SQLAlchemy that it is something that will
 
   # searches the database for items using name
   @classmethod
-  def find_store_by_name(cls, name: str):
+  def find_store_by_name(cls, name: str) -> "StoreModel":
     # return cls.query.filter_by(name=name) # SELECT name FROM __tablename__ WHERE name=name
     # this function would return a StoreModel object
     return cls.query.filter_by(name=name).first() # SELECT name FROM __tablename__ WHERE name=name LIMIT 1
 
   @classmethod
-  def find_all(cls) -> List:
+  def find_all(cls) -> List["StoreModel"]:
     return cls.query.all()
 
   # method to insert or update an item into database
