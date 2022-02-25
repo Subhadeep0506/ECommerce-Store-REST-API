@@ -34,7 +34,7 @@ def create_tables():
 
 
 # JWT() creates a new endpoint: /auth
-# we send an username and password to /auth
+# we send username and password to /auth
 # JWT() gets the username and password, and sends it to authenticate function
 # the authenticate function maps the username and checks the password
 # if all goes well, the authenticate function returns user
@@ -113,5 +113,5 @@ api.add_resource(TokenRefresh, '/refresh')
 
 if __name__ == "__main__":
     db.init_app(app)
-    ma.init_app(app)  # tells masrshmallow that it should be communicating with this flask app
+    ma.init_app(app)  # tells marshmallow that it should be communicating with this flask app
     app.run(port=5000, debug=True)
