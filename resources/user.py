@@ -2,7 +2,13 @@ from flask import request
 from flask_restful import Resource
 from marshmallow import ValidationError
 from werkzeug.security import safe_str_cmp
-from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_jwt
+from flask_jwt_extended import (
+    create_access_token,
+    create_refresh_token,
+    jwt_required,
+    get_jwt_identity,
+    get_jwt,
+)
 
 from models.user import UserModel
 from schemas.user import UserSchema
@@ -35,7 +41,7 @@ class UserRegister(Resource):
         user = user_schema.load(request.get_json())
 
         # First check if that user is present or not
-        if UserModel.find_by_username(user["username"]):
+        if UserModel.find_by_username(user.username):
             # if exists, then don't add
             return {"message": "An user with that username already exists."}, 400
 

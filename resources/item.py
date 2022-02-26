@@ -6,7 +6,6 @@ from flask_jwt_extended import (
     get_jwt,
     get_jwt_identity,
 )
-from marshmallow import ValidationError
 
 from models.item import ItemModel
 from schemas.item import ItemSchema
@@ -28,7 +27,7 @@ class Item(Resource):
     def get(cls, name: str) -> Dict:
         item = ItemModel.find_item_by_name(name)
         if item:
-            return item_schema.dump(), 200
+            return item_schema.dump(item), 200
 
         return {"message": ITEM_NOT_FOUND}, 404
 
