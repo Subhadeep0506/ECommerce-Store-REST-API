@@ -2,3 +2,4 @@ test/test.py
 test/test.db
 __pycache__
 .vscode
+.idea
