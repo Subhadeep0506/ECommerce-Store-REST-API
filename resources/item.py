@@ -1,31 +1,26 @@
 from typing import Dict
-from flask_restful import Resource, reqparse
-from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
+from flask import request
+from flask_restful import Resource
+from flask_jwt_extended import (
+    jwt_required,
+    get_jwt,
+    get_jwt_identity,
+)
+from marshmallow import ValidationError
 
 from models.item import ItemModel
+from schemas.item import ItemSchema
 
 BLANK_ERROR = "'{}' cannot be blank"
 ITEM_NOT_FOUND = "item not found."
 NAME_ALREADY_EXISTS = "item '{}' already exists"
 ERROR_INSERTING = "An error occured while inserting the item."
 ITEM_DELETED = "Item deleted"
+item_schema = ItemSchema()
+item_list_schema = ItemSchema(many=True)
 
 
 class Item(Resource):
-
-    parser = reqparse.RequestParser()
-    parser.add_argument(
-        "price",
-        type=float,
-        required=True,
-        help=BLANK_ERROR.format("price"),
-    )
-    parser.add_argument(
-        "store_id",
-        type=int,
-        required=True,
-        help=BLANK_ERROR.format("store_id"),
-    )
 
     # TO GET ITEM WITH NAME
     @classmethod
@@ -33,7 +28,7 @@ class Item(Resource):
     def get(cls, name: str) -> Dict:
         item = ItemModel.find_item_by_name(name)
         if item:
-            return item.json(), 200
+            return item_schema.dump(), 200
 
         return {"message": ITEM_NOT_FOUND}, 404
 
@@ -45,16 +40,18 @@ class Item(Resource):
         if ItemModel.find_item_by_name(name):
             return {"messege": NAME_ALREADY_EXISTS.format(name)}, 400
 
-        data = Item.parser.parse_args()
-        # data = request.get_json()   # get_json(force=True) means, we don't need a content type header
-        item = ItemModel(name, **data)
+        item_json = request.get_json()
+        item_json["name"] = name  # this part is necessary to populate the payload with item name
 
+        item = item_schema.load(item_json)
+
+        # TODO: put these in above try except
         try:
             item.save_to_database()
         except:
             return {"messege": ERROR_INSERTING}, 500
 
-        return item.json(), 201  # 201 is for CREATED status
+        return item_schema.dump(item), 201  # 201 is for CREATED status
 
     # TO DELETE AN ITEM
     @classmethod
@@ -76,21 +73,23 @@ class Item(Resource):
     # TO ADD OR UPDATE AN ITEM
     @classmethod
     def put(cls, name: str):
-        data = Item.parser.parse_args()
-        # data = request.get_json()
+        item_json = request.get_json()
+
         item = ItemModel.find_item_by_name(name)
 
         # if item is not available, add it
         if item is None:
-            item = ItemModel(name, **data)
+            item_json["name"] = name
+            item = item_schema.load(item_json)
+
         # if item exists, update it
         else:
-            item.price = data["price"]
-            item.store_id = data["store_id"]
+            item.price = item_json["price"]
+            item.store_id = item_json["store_id"]
 
         # whether item is changed or inserted, it has to be saved to db
         item.save_to_database()
-        return item.json()
+        return item_schema.dump(item), 200
 
 
 class ItemList(Resource):
@@ -98,7 +97,7 @@ class ItemList(Resource):
     @jwt_required(optional=True)
     def get(cls):
         user_id = get_jwt_identity()
-        items = [item.json() for item in ItemModel.find_all()]
+        items = [item_list_schema.dump(ItemModel.find_all())]
 
         # if user id is given, then display full details
         if user_id:

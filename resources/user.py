@@ -2,13 +2,7 @@ from flask import request
 from flask_restful import Resource
 from marshmallow import ValidationError
 from werkzeug.security import safe_str_cmp
-from flask_jwt_extended import (
-    create_access_token,
-    create_refresh_token,
-    jwt_required,
-    get_jwt_identity,
-    get_jwt
-)
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_jwt
 
 from models.user import UserModel
 from schemas.user import UserSchema
@@ -38,10 +32,7 @@ class UserRegister(Resource):
     # calls to post a new user (new user registration)
     @classmethod
     def post(cls):
-        try:
-            user = user_schema.load(request.get_json())
-        except ValidationError as error:
-            return error.messages, 400
+        user = user_schema.load(request.get_json())
 
         # First check if that user is present or not
         if UserModel.find_by_username(user["username"]):
@@ -57,7 +48,6 @@ class UserRegister(Resource):
 
 
 class User(Resource):
-
     @classmethod
     def get(cls, user_id: int):
 
@@ -78,14 +68,10 @@ class User(Resource):
 
 
 class UserLogin(Resource):
-
     @classmethod
     def post(cls):
         # get data from parser
-        try:
-            user_data = user_schema.load(request.get_json())
-        except ValidationError as error:
-            return error.messages, 400
+        user_data = user_schema.load(request.get_json())
 
         # find user in database
         user = UserModel.find_by_username(user_data.username)
@@ -99,12 +85,9 @@ class UserLogin(Resource):
             refresh_token = create_refresh_token(identity=user.id)
             print("user logged in")
 
-            return {
-                       "access_token": access_token,
-                       "refresh_token": refresh_token
-                   }, 200
+            return {"access_token": access_token, "refresh_token": refresh_token}, 200
 
-        return {"message": "Invalid credentials."}, 401 # Unauthorized
+        return {"message": "Invalid credentials."}, 401  # Unauthorized
 
 
 class UserLogout(Resource):
@@ -112,7 +95,7 @@ class UserLogout(Resource):
     @classmethod
     @jwt_required()
     def post(cls):
-        jti = get_jwt()["jti"]   # jti is JWT ID, unique identifier for a JWT
+        jti = get_jwt()["jti"]  # jti is JWT ID, unique identifier for a JWT
         BLACKLIST.add(jti)
         return {"message": "Successfully logged out."}, 200
 
@@ -122,6 +105,6 @@ class TokenRefresh(Resource):
     @jwt_required(refresh=True)
     def post(cls):
         current_user = get_jwt_identity()
-        new_token = create_access_token(identity=current_user, fresh=False)   # fresh=Flase means that user have logged in days ago.
+        new_token = create_access_token(identity=current_user, fresh=False)  # fresh=Flase means that user have logged in days ago.
 
         return {"access_token": new_token}, 200
