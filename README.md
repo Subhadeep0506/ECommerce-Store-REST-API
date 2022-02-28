@@ -1,4 +1,5 @@
 # REST API application made with flask.
+
 Contains <> branches
 
 Final and stable application is in the master branch
@@ -20,3 +21,7 @@ Run the following command to start the application:
 ```
 python app.py
 ```
+
+## IMPORTANT
+
+Make sure to delete the `data.db` file from `database` directory before fresh run.

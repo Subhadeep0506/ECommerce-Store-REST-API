@@ -85,13 +85,16 @@ class UserLogin(Resource):
         # check password
         # this here is what authenticate() function used to do
         if user and safe_str_cmp(user.password, user_data.password):
+            # Check if user is activated
+            if user.activated:
+                # create access and refresh tokens
+                access_token = create_access_token(identity=user.id, fresh=True)  # here, identity=user.id is what identity() used to do previously
+                refresh_token = create_refresh_token(identity=user.id)
+                # print("user logged in")
 
-            # create access and refresh tokens
-            access_token = create_access_token(identity=user.id, fresh=True)  # here, identity=user.id is what identity() used to do previously
-            refresh_token = create_refresh_token(identity=user.id)
-            print("user logged in")
-
-            return {"access_token": access_token, "refresh_token": refresh_token}, 200
+                return {"access_token": access_token, "refresh_token": refresh_token}, 200
+            # If user is not activated
+            return {"message": "You have not confirmed registration, please check your email."}
 
         return {"message": "Invalid credentials."}, 401  # Unauthorized
 
@@ -114,3 +117,17 @@ class TokenRefresh(Resource):
         new_token = create_access_token(identity=current_user, fresh=False)  # fresh=Flase means that user have logged in days ago.
 
         return {"access_token": new_token}, 200
+
+
+class UserConfirm(Resource):
+    @classmethod
+    def get(cls, user_id: int):
+        user = UserModel.find_by_id(user_id)
+
+        # If user is found, activate their profile
+        if user:
+            user.activated = True
+            user.save_to_database()
+            return {"message": "User activated."}, 200
+
+        return {"meggase": "User not found"}, 404

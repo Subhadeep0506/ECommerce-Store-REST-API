@@ -1,3 +1,4 @@
+from email.policy import default
 from enum import unique
 from typing import Dict, Union
 
@@ -8,12 +9,13 @@ UserJSON = Dict[str, Union[int, str]]
 
 class UserModel(db.Model):
 
-    __tablename__ = "users"   # will be used to tell sqlalchemy the table name for users
+    __tablename__ = "users"  # will be used to tell sqlalchemy the table name for users
 
     # table columns for users table
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=False)
+    activated = db.Column(db.Boolean, default=False)
 
     # def __init__(self, username: str, password: str):
     #     self.username = username

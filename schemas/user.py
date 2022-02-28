@@ -11,4 +11,7 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         model = UserModel
         load_instance = True
         load_only = ("password",)  # makes 'password' field load_only
-        dump_only = ("id",)  # makes 'id' field dump_only.
+        dump_only = (
+            "id",
+            "activated",
+        )  # makes 'id' field dump_only.
