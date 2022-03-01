@@ -1,6 +1,6 @@
-from flask import request
+import traceback
+from flask import make_response, render_template, request
 from flask_restful import Resource
-from marshmallow import ValidationError
 from werkzeug.security import safe_str_cmp
 from flask_jwt_extended import (
     create_access_token,
@@ -13,21 +13,6 @@ from flask_jwt_extended import (
 from models.user import UserModel
 from schemas.user import UserSchema
 from blacklist import BLACKLIST
-
-# extracted parser variable for global use, and made it private
-# _user_parser = reqparse.RequestParser()
-# _user_parser.add_argument(
-#   "username",
-#   type=str,
-#   required=True,
-#   help="This field cannot be empty"
-# )
-# _user_parser.add_argument(
-#   "password",
-#   type=str,
-#   required=True,
-#   help="This field cannot be empty"
-# )
 
 user_schema = UserSchema()
 
@@ -45,12 +30,24 @@ class UserRegister(Resource):
             # if exists, then don't add
             return {"message": "An user with that username already exists."}, 400
 
+        # Then check if that user email is present or not
+        if UserModel.find_by_email(user.email):
+            # if exists, then don't add
+            return {"message": "An user with that email already exists."}, 400
+
         # user = UserModel(data["username"], data["password"])
         # user = UserModel(**user_data)  # since parser only takes in username and password, only those two will be added.
         # flask_marshmallow already creates a user model, so we need not do it manually
-        user.save_to_database()
-
-        return {"messege": "User added successfully."}, 201
+        try:
+            user.save_to_database()
+            user.send_confirmation_email()
+            return {
+                "messege": "Account created successfully, an email with activation link has been sent to your email.",
+            }, 201
+        except:
+            # print(err.messages)
+            traceback.print_exc()
+            return {"message": "Internal server error, failed to create user"}
 
 
 class User(Resource):
@@ -76,8 +73,8 @@ class User(Resource):
 class UserLogin(Resource):
     @classmethod
     def post(cls):
-        # get data from parser
-        user_data = user_schema.load(request.get_json())
+        # get data from user to login. Include email to optional field.
+        user_data = user_schema.load(request.get_json(), partial=("email",))
 
         # find user in database
         user = UserModel.find_by_username(user_data.username)
@@ -128,6 +125,14 @@ class UserConfirm(Resource):
         if user:
             user.activated = True
             user.save_to_database()
-            return {"message": "User activated."}, 200
+            headers = {"Content-Type": "text/html"}
+            return make_response(
+                render_template(
+                    "confirmation_page.html",
+                    email=user.username,
+                ),
+                200,
+                headers,
+            )
 
-        return {"meggase": "User not found"}, 404
+        return {"message": "User not found."}
