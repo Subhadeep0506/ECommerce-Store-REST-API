@@ -13,7 +13,7 @@ class ItemModel(db.Model):  # tells SQLAlchemy that it is something that will be
     price = db.Column(db.Float(precision=2), nullable=False)  # precision: numbers after decimal point
 
     store_id = db.Column(db.Integer, db.ForeignKey("stores.id"), nullable=False)
-    store = db.relationship("StoreModel")
+    store = db.relationship("StoreModel", back_populates="items")
 
     # searches the database for items using name
     @classmethod

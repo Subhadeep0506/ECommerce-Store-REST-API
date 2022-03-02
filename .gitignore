@@ -3,3 +3,5 @@ test/test.db
 __pycache__
 .vscode
 .idea
+/.env
+database/data.db

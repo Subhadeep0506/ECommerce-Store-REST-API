@@ -3,18 +3,7 @@ from requests import Response, post
 from flask import request, url_for
 
 from database import db
-
-UserJSON = Dict[str, Union[int, str]]
-# MAILGUN_DOMAIN = "YOUR_DOMAIN"
-MAILGUN_DOMAIN = "sandbox2547fbe807ac4a6faa83edbd51fe6e93.mailgun.org"
-
-# MAILGUN_API_KEY = "API_KEY_HERE"
-MAILGUN_API_KEY = "fe5c954e9d180a06938ac17e71ab0240-e2e3d8ec-005737fa"
-
-FROM_TITLE = "Stores RestAPI"
-
-# FROM_EMAIL = "Your Mailgun Email"
-FROM_EMAIL = "subhadeepdoublecap@gmail.com"
+from libs.mailgun import Mailgun
 
 
 class UserModel(db.Model):
@@ -46,19 +35,11 @@ class UserModel(db.Model):
         # url_for("userconfirm") - this must mathch the name of user confirmation endpoint
         link = request.url_root[:-1] + url_for("userconfirm", user_id=self.id)
 
-        return post(
-            f"https://api.mailgun.net/v3/{MAILGUN_DOMAIN}/messages",
-            auth=(
-                "api",
-                MAILGUN_API_KEY,
-            ),
-            data={
-                "from": f"{FROM_TITLE} <{FROM_EMAIL}>",
-                "to": [self.email],
-                "subject": "CONFIRM REGISTRATION",
-                "text": f"Click the link to confirm ragistration: {link}",
-            },
-        )
+        subject = "CONFIRM REGISTRATION"
+        text = f"Click the link to confirm ragistration: {link}"
+        html = f'<html>Click the link to confirm ragistration: <a href="{link}">{link}</a></html>'
+
+        return Mailgun.send_email([self.email], subject, text, html)
 
     def save_to_database(self) -> None:
         db.session.add(self)
