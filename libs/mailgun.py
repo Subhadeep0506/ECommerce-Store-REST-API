@@ -14,7 +14,7 @@ class Mailgun:
     MAILGUN_API_KEY = os.environ.get("MAILGUN_API_KEY")  # can be None
     FROM_TITLE = "Stores RestAPI"
     # FROM_EMAIL = "Your Mailgun Email"
-    FROM_EMAIL = "postmaster@sandboxb3ef8f2c0e20406cb3f834bc39735ab4.mailgun.org"
+    FROM_EMAIL = "subhadeepdoublecap@gmail.com"
 
     # This method will interact with Mailgun API and return the response sent
     @classmethod

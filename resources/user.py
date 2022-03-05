@@ -9,6 +9,9 @@ from flask_jwt_extended import (
     get_jwt_identity,
     get_jwt,
 )
+import traceback
+from flask import make_response, render_template, request
+
 
 from models.user import UserModel
 from schemas.user import UserSchema
@@ -44,13 +47,23 @@ class UserRegister(Resource):
         if UserModel.find_by_username(user.username):
             # if exists, then don't add
             return {"message": "An user with that username already exists."}, 400
+        if UserModel.find_by_email(user.email):
+            # if exists, then don't add
+            return {"message": "An user with that email already exists."}, 400
 
         # user = UserModel(data["username"], data["password"])
         # user = UserModel(**user_data)  # since parser only takes in username and password, only those two will be added.
         # flask_marshmallow already creates a user model, so we need not do it manually
-        user.save_to_database()
-
-        return {"messege": "User added successfully."}, 201
+        try:
+            user.save_to_database()
+            user.send_confirmation_email()
+            return {
+                "messege": "Account created successfully, an email with activation link has been sent to your email.",
+            }, 201
+        except:
+            # print(err.messages)
+            traceback.print_exc()
+            return {"message": "Internal server error, failed to create user"}
 
 
 class User(Resource):
@@ -76,8 +89,8 @@ class User(Resource):
 class UserLogin(Resource):
     @classmethod
     def post(cls):
-        # get data from parser
-        user_data = user_schema.load(request.get_json())
+        # get data from user to login. Include email to optional field.
+        user_data = user_schema.load(request.get_json(), partial=("email",))
 
         # find user in database
         user = UserModel.find_by_username(user_data.username)
@@ -128,6 +141,14 @@ class UserConfirm(Resource):
         if user:
             user.activated = True
             user.save_to_database()
-            return {"message": "User activated."}, 200
+            headers = {"Content-Type": "text/html"}
+            return make_response(
+                render_template(
+                    "confirmation_page.html",
+                    email=user.username,
+                ),
+                200,
+                headers,
+            )
 
         return {"meggase": "User not found"}, 404
