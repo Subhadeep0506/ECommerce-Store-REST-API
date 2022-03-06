@@ -16,6 +16,7 @@ from flask import make_response, render_template, request
 from models.user import UserModel
 from schemas.user import UserSchema
 from blacklist import BLACKLIST
+from libs.mailgun import MailgunException
 
 # extracted parser variable for global use, and made it private
 # _user_parser = reqparse.RequestParser()
@@ -60,6 +61,10 @@ class UserRegister(Resource):
             return {
                 "messege": "Account created successfully, an email with activation link has been sent to your email.",
             }, 201
+        # Delete user from database in case of any Mailgun error
+        except MailgunException as e:
+            user.delete_from_database()
+            return {"message", str(e)}, 500
         except:
             # print(err.messages)
             traceback.print_exc()
