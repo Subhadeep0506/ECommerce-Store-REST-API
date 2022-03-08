@@ -4,6 +4,7 @@ from flask import request, url_for
 
 from database import db
 from libs.mailgun import Mailgun
+from models.confirmation import ConfirmationModel
 
 
 class UserModel(db.Model):
@@ -15,7 +16,18 @@ class UserModel(db.Model):
     username = db.Column(db.String(80), nullable=False, unique=True)
     email = db.Column(db.String(50), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=False)
-    activated = db.Column(db.Boolean, default=False)
+
+    confirmation = db.relationship(
+        "ConfirmationModel",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
+    # lazy=dynamic means that when we create a new UserModel, confirmation is not retrieved from the db,
+    # When we access the confirmation, then it it is retrieved from detabase
+
+    @property
+    def most_recent_confirmation(self) -> "ConfirmationModel":
+        return self.confirmation.order_by(db.desc(ConfirmationModel.expire_at)).first()
 
     @classmethod
     def find_by_username(cls, username: str) -> "UserModel":
@@ -33,7 +45,10 @@ class UserModel(db.Model):
     def send_confirmation_email(self) -> Response:
         # http://127.0.0.1:5000 - is the 'url_root'
         # url_for("userconfirm") - this must mathch the name of user confirmation endpoint
-        link = request.url_root[:-1] + url_for("userconfirm", user_id=self.id)
+        link = request.url_root[:-1] + url_for(
+            "confirmation",
+            confirmation_id=self.most_recent_confirmation.id,
+        )
 
         subject = "CONFIRM REGISTRATION"
         text = f"Click the link to confirm ragistration: {link}"
