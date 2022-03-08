@@ -1,5 +1,4 @@
-from typing import Dict, Union
-from requests import Response, post
+from requests import Response
 from flask import request, url_for
 
 from database import db
@@ -14,13 +13,14 @@ class UserModel(db.Model):
     # table columns for users table
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False, unique=True)
-    email = db.Column(db.String(50), nullable=False, unique=True)
+    email = db.Column(db.String(80), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=False)
 
     confirmation = db.relationship(
         "ConfirmationModel",
         lazy="dynamic",
         cascade="all, delete-orphan",
+        overlaps="user",
     )
     # lazy=dynamic means that when we create a new UserModel, confirmation is not retrieved from the db,
     # When we access the confirmation, then it it is retrieved from detabase
@@ -45,14 +45,11 @@ class UserModel(db.Model):
     def send_confirmation_email(self) -> Response:
         # http://127.0.0.1:5000 - is the 'url_root'
         # url_for("userconfirm") - this must mathch the name of user confirmation endpoint
-        link = request.url_root[:-1] + url_for(
-            "confirmation",
-            confirmation_id=self.most_recent_confirmation.id,
-        )
+        link = request.url_root[:-1] + url_for("confirmation", confirmation_id=self.most_recent_confirmation.id)
 
         subject = "CONFIRM REGISTRATION"
         text = f"Click the link to confirm ragistration: {link}"
-        html = f'<html>Click the link to confirm ragistration: <a href="{link}">{link}</a></html>'
+        html = f'<html>Click the link to confirm registration: <a href="{link}">{link}</a></html>'
 
         return Mailgun.send_email([self.email], subject, text, html)
 
