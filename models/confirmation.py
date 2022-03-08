@@ -12,8 +12,8 @@ class ConfirmationModel(db.Model):
 
     id = db.Column(db.String(50), primary_key=True)
     expire_at = db.Column(db.Integer, nullable=False)
-    confirm_status = db.Column(db.Boolean, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    confirmed = db.Column(db.Boolean, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     user = db.relationship("UserModel")
 
     def __init__(self, user_id: int, **kwargs):
@@ -21,7 +21,7 @@ class ConfirmationModel(db.Model):
         self.user_id = user_id
         self.id = uuid4().hex
         self.expire_at = int(time()) + CONFIRMATION_EXPIRATION_DELTA  # current time + 30 minutes
-        self.confirm_status = False
+        self.confirmed = False
 
     @classmethod
     def find_by_id(cls, _id: str) -> "ConfirmationModel":

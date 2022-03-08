@@ -1,4 +1,5 @@
 from ma import ma
+from marshmallow import pre_dump
 from models.user import UserModel
 
 
@@ -13,5 +14,10 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         load_only = ("password",)  # makes 'password' field load_only
         dump_only = (
             "id",
-            "activated",
+            "confirmation",
         )  # makes 'id' field dump_only.
+
+    @pre_dump
+    def _pre_dump(self, user: UserModel, **kwargs):  # Here user is the user that will be turned to json
+        user.confirmation = [user.most_recent_confirmation]
+        return user

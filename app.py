@@ -5,7 +5,6 @@ from marshmallow import ValidationError
 
 from ma import ma
 from resources.user import (
-    UserConfirm,
     UserRegister,
     User,
     UserLogin,
@@ -14,6 +13,7 @@ from resources.user import (
 )
 from resources.item import Item, ItemList
 from resources.store import Store, StoreList
+from resources.confirmation import Confirmation, ConfirmationByUser
 from blacklist import BLACKLIST
 from database import db
 
@@ -125,7 +125,8 @@ api.add_resource(Store, "/store/<string:name>")
 api.add_resource(ItemList, "/items")
 api.add_resource(StoreList, "/stores")
 api.add_resource(UserRegister, "/register")
-api.add_resource(UserConfirm, "/activate/<int:user_id>")
+api.add_resource(Confirmation, "/user_confirm/<string:confirmation_id>")
+api.add_resource(ConfirmationByUser, "/confirmation/user/<int:user_id>")
 api.add_resource(User, "/user/<int:user_id>")
 api.add_resource(UserLogin, "/login")
 api.add_resource(UserLogout, "/logout")

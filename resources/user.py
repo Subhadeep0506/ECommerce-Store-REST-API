@@ -10,28 +10,14 @@ from flask_jwt_extended import (
     get_jwt,
 )
 import traceback
-from flask import make_response, render_template, request
+from flask import request
 
 
 from models.user import UserModel
 from schemas.user import UserSchema
 from blacklist import BLACKLIST
 from libs.mailgun import MailgunException
-
-# extracted parser variable for global use, and made it private
-# _user_parser = reqparse.RequestParser()
-# _user_parser.add_argument(
-#   "username",
-#   type=str,
-#   required=True,
-#   help="This field cannot be empty"
-# )
-# _user_parser.add_argument(
-#   "password",
-#   type=str,
-#   required=True,
-#   help="This field cannot be empty"
-# )
+from models.confirmation import ConfirmationModel
 
 user_schema = UserSchema()
 
@@ -57,6 +43,8 @@ class UserRegister(Resource):
         # flask_marshmallow already creates a user model, so we need not do it manually
         try:
             user.save_to_database()
+            confirmation = ConfirmationModel(user.id)
+            confirmation.save_to_database()
             user.send_confirmation_email()
             return {
                 "messege": "Account created successfully, an email with activation link has been sent to your email.",
@@ -68,6 +56,7 @@ class UserRegister(Resource):
         except:
             # print(err.messages)
             traceback.print_exc()
+            user.delete_from_database()
             return {"message": "Internal server error, failed to create user"}
 
 
@@ -103,8 +92,9 @@ class UserLogin(Resource):
         # check password
         # this here is what authenticate() function used to do
         if user and safe_str_cmp(user.password, user_data.password):
+            confirmation = user.most_recent_confirmation
             # Check if user is activated
-            if user.activated:
+            if confirmation and confirmation.confirm_status:
                 # create access and refresh tokens
                 access_token = create_access_token(identity=user.id, fresh=True)  # here, identity=user.id is what identity() used to do previously
                 refresh_token = create_refresh_token(identity=user.id)
@@ -135,25 +125,3 @@ class TokenRefresh(Resource):
         new_token = create_access_token(identity=current_user, fresh=False)  # fresh=Flase means that user have logged in days ago.
 
         return {"access_token": new_token}, 200
-
-
-class UserConfirm(Resource):
-    @classmethod
-    def get(cls, user_id: int):
-        user = UserModel.find_by_id(user_id)
-
-        # If user is found, activate their profile
-        if user:
-            user.activated = True
-            user.save_to_database()
-            headers = {"Content-Type": "text/html"}
-            return make_response(
-                render_template(
-                    "confirmation_page.html",
-                    email=user.username,
-                ),
-                200,
-                headers,
-            )
-
-        return {"meggase": "User not found"}, 404
