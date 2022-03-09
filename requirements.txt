@@ -1,8 +1,9 @@
 Flask
 Flask-RESTful
-Flask_-JWT-Extended
+Flask-JWT-Extended
 Flask-SQLAlchemy
 Marshmallow
 Flask-Marshmallow
 Marshmallow-SQLAlchemy
 Python-Dotenv
+Flask-Uploads
