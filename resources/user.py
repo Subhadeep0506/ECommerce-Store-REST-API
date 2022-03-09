@@ -21,6 +21,16 @@ from models.confirmation import ConfirmationModel
 
 user_schema = UserSchema()
 
+USER_ALREADY_EXISTS = "A user with that username already exists."
+EMAIL_ALREADY_EXISTS = "A user with that email already exists."
+USER_NOT_FOUND = "User not found."
+USER_DELETED = "User deleted."
+INVALID_CREDENTIALS = "Invalid credentials!"
+USER_LOGGED_OUT = "User <id={user_id}> successfully logged out."
+NOT_CONFIRMED_ERROR = "You have not confirmed registration, please check your email <{}>."
+FAILED_TO_CREATE = "Internal server error. Failed to create user."
+SUCCESS_REGISTER_MESSAGE = "Account created successfully, an email with an activation link has been sent to your email address, please check."
+
 
 # New user registration class
 class UserRegister(Resource):
@@ -33,10 +43,10 @@ class UserRegister(Resource):
         # First check if that user is present or not
         if UserModel.find_by_username(user.username):
             # if exists, then don't add
-            return {"message": "An user with that username already exists."}, 400
+            return {"message": USER_ALREADY_EXISTS}, 400
         if UserModel.find_by_email(user.email):
             # if exists, then don't add
-            return {"message": "An user with that email already exists."}, 400
+            return {"message": EMAIL_ALREADY_EXISTS}, 400
 
         # user = UserModel(data["username"], data["password"])
         # user = UserModel(**user_data)  # since parser only takes in username and password, only those two will be added.
@@ -47,7 +57,7 @@ class UserRegister(Resource):
             confirmation.save_to_database()
             user.send_confirmation_email()
             return {
-                "messege": "Account created successfully, an email with activation link has been sent to your email.",
+                "messege": SUCCESS_REGISTER_MESSAGE,
             }, 201
         # Delete user from database in case of any Mailgun error
         except MailgunException as e:
@@ -57,7 +67,7 @@ class UserRegister(Resource):
             # print(err.messages)
             traceback.print_exc()
             user.delete_from_database()
-            return {"message": "Internal server error, failed to create user"}
+            return {"message": FAILED_TO_CREATE}
 
 
 class User(Resource):
@@ -66,7 +76,7 @@ class User(Resource):
 
         user = UserModel.find_by_id(user_id)
         if not user:
-            return {"message": "User not found."}, 404
+            return {"message": USER_NOT_FOUND}, 404
 
         return user_schema.dump(user), 200
 
@@ -74,10 +84,10 @@ class User(Resource):
     def delete(cls, user_id: int):
         user = UserModel.find_by_id(user_id)
         if not user:
-            return {"message": "User not found."}, 404
+            return {"message": USER_NOT_FOUND}, 404
 
         user.delete_from_database()
-        return {"message": "User deleted."}, 200
+        return {"message": USER_DELETED}, 200
 
 
 class UserLogin(Resource):
@@ -93,8 +103,9 @@ class UserLogin(Resource):
         # this here is what authenticate() function used to do
         if user and safe_str_cmp(user.password, user_data.password):
             confirmation = user.most_recent_confirmation
+            print("user resource: ", confirmation.id)
             # Check if user is activated
-            if confirmation and confirmation.confirm_status:
+            if confirmation and confirmation.confirmed:
                 # create access and refresh tokens
                 access_token = create_access_token(identity=user.id, fresh=True)  # here, identity=user.id is what identity() used to do previously
                 refresh_token = create_refresh_token(identity=user.id)
@@ -102,9 +113,9 @@ class UserLogin(Resource):
 
                 return {"access_token": access_token, "refresh_token": refresh_token}, 200
             # If user is not activated
-            return {"message": "You have not confirmed registration, please check your email."}
+            return {"message": NOT_CONFIRMED_ERROR}
 
-        return {"message": "Invalid credentials."}, 401  # Unauthorized
+        return {"message": INVALID_CREDENTIALS}, 401  # Unauthorized
 
 
 class UserLogout(Resource):
@@ -114,7 +125,7 @@ class UserLogout(Resource):
     def post(cls):
         jti = get_jwt()["jti"]  # jti is JWT ID, unique identifier for a JWT
         BLACKLIST.add(jti)
-        return {"message": "Successfully logged out."}, 200
+        return {"message": USER_LOGGED_OUT.format(jti)}, 200
 
 
 class TokenRefresh(Resource):

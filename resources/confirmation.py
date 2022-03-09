@@ -9,6 +9,11 @@ from schemas.confirmation import ConfirmationSchema
 from libs.mailgun import MailgunException
 
 confirmation_schema = ConfirmationSchema()
+NOT_FOUND = "Confirmation referrence not found"
+EXPIRED = "Confirmation link has expired."
+ALREADY_CONFIRMED = "Registration has already been confirmed."
+RESEND_FAIL = "Failed to resend confirmation mail."
+RESEND_SUCCESSFUL = "Confirmation mail re-send successful"
 
 
 class Confirmation(Resource):
@@ -17,13 +22,13 @@ class Confirmation(Resource):
     def get(cls, confirmation_id: str):
         confirmation = ConfirmationModel.find_by_id(confirmation_id)
         if not confirmation:
-            return {"message": "Confirmation referrence not found"}, 404
+            return {"message": NOT_FOUND}, 404
 
         if confirmation.has_expired:
-            return {"message": "Confirmation link has expired."}, 400
+            return {"message": EXPIRED}, 400
 
         if confirmation.confirmed:
-            return {"message": "Registration has already been confirmed."}, 400
+            return {"message": ALREADY_CONFIRMED}, 400
 
         confirmation.confirmed = True
         confirmation.save_to_database()
@@ -60,7 +65,7 @@ class ConfirmationByUser(Resource):
             confirmation = user.most_recent_confirmation
             if confirmation:
                 if confirmation.confirmed:
-                    return {"message": "Registration has already been confirmed"}, 400
+                    return {"message": ALREADY_CONFIRMED}, 400
 
                 confirmation.force_to_expire()
 
@@ -68,10 +73,10 @@ class ConfirmationByUser(Resource):
             new_confirmation.save_to_database()
             user.send_confirmation_email()
 
-            return {"message": "Confirmation mail re-send successful"}, 201
+            return {"message": RESEND_SUCCESSFUL}, 201
 
         except MailgunException as err:
             return {"message": str(err)}, 500
         except:
             traceback.print_exc()
-            return {"message": "Failed to resend confirmation mail."}, 500
+            return {"message": RESEND_FAIL}, 500
