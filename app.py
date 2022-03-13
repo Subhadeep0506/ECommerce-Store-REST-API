@@ -1,7 +1,9 @@
 from flask import Flask, jsonify
 from flask_restful import Api
 from flask_jwt_extended import JWTManager
+from flask_uploads import configure_uploads, patch_request_class
 from marshmallow import ValidationError
+from dotenv import load_dotenv
 
 from ma import ma
 from resources.user import (
@@ -14,24 +16,19 @@ from resources.user import (
 from resources.item import Item, ItemList
 from resources.store import Store, StoreList
 from resources.confirmation import Confirmation, ConfirmationByUser
+from resources.image import ImageUpload, Image, AvatarUpload, Avatar
+from libs.image_helper import IMAGE_SET
 from blacklist import BLACKLIST
 from database import db
 
 app = Flask(__name__)
-
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database/data.db"
-
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False  # turns of flask_sqlalchemy modification tracker
-app.config["PROPAGATE_EXCEPTIONS"] = True  # if flask_jwt raises an error, the flask app will check the error if this is set to true
-app.config["JWT_BLACKLIST_ENABLED"] = True
-app.config["JWT_BLACKLIST_TOKEN_CHECKS"] = [
-    "access",
-    "refresh",
-]  # both access and refresh tokens will be denied for the user ids
-
-app.secret_key = "komraishumtirkomchuri"
-# app.config["JWT_SECRET_KEY"] = "YOUR KEY HERE"
-
+load_dotenv(".env", verbose=True)
+# .env has to be loaded manually here beacuse it is loaded automatically when app runs.
+# But here it will not load automatically as the app has not started at the point
+app.config.from_object("default_config")
+app.config.from_envvar("APPLICATION_SETTINGS")
+patch_request_class(app, 10 * 1024 * 1024)  # Used to limit the max size of image that can be uploaded, here: 10mb
+configure_uploads(app, IMAGE_SET)
 api = Api(app)
 
 
@@ -60,7 +57,7 @@ jwt = JWTManager(app)  # JwtManager links up to the application, doesn't create 
 # below function returns True, if the token that is sent is in the blacklist
 @jwt.token_in_blocklist_loader
 def check_if_token_in_blacklist(jwt_header, jwt_data):
-    print("Log Message:", jwt_data)
+    # print("Log Message:", jwt_data)
     return jwt_data["jti"] in BLACKLIST
 
 
@@ -74,7 +71,7 @@ def add_claims_to_jwt(identity):
 
 # JWT Configurations
 @jwt.expired_token_loader
-def expired_token_callback():
+def expired_token_callback(header, data):
     return (
         jsonify({"description": "The token has expired.", "error": "token_expired"}),
         401,
@@ -127,6 +124,10 @@ api.add_resource(StoreList, "/stores")
 api.add_resource(UserRegister, "/register")
 api.add_resource(Confirmation, "/user_confirm/<string:confirmation_id>")
 api.add_resource(ConfirmationByUser, "/confirmation/user/<int:user_id>")
+api.add_resource(ImageUpload, "/upload/image/")
+api.add_resource(Image, "/image/<string:filename>")
+api.add_resource(AvatarUpload, "/upload/avatar")
+api.add_resource(Avatar, "/avatar/<int:user_id>")
 api.add_resource(User, "/user/<int:user_id>")
 api.add_resource(UserLogin, "/login")
 api.add_resource(UserLogout, "/logout")
