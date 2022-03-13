@@ -40,8 +40,7 @@ Make sure to delete the `data.db` file from `database` directory before fresh ru
    ```
    To create migration instance.
 4. Edit the version file accordingly.
-5. ````
+5. ```
    flask db upgrade
-       ```
+   ```
    To commit the upgrade.
-   ````
