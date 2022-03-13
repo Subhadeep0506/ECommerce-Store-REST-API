@@ -7,3 +7,5 @@ Flask-Marshmallow
 Marshmallow-SQLAlchemy
 Python-Dotenv
 Flask-Uploads
+Flask-Migrate
+psycopg2-binary

@@ -2,6 +2,7 @@ from flask import Flask, jsonify
 from flask_restful import Api
 from flask_jwt_extended import JWTManager
 from flask_uploads import configure_uploads, patch_request_class
+from flask_migrate import Migrate
 from marshmallow import ValidationError
 from dotenv import load_dotenv
 
@@ -25,11 +26,12 @@ app = Flask(__name__)
 load_dotenv(".env", verbose=True)
 # .env has to be loaded manually here beacuse it is loaded automatically when app runs.
 # But here it will not load automatically as the app has not started at the point
-app.config.from_object("default_config")
+app.config.from_object("default_config")    # Loads the default_config.py file
 app.config.from_envvar("APPLICATION_SETTINGS")
 patch_request_class(app, 10 * 1024 * 1024)  # Used to limit the max size of image that can be uploaded, here: 10mb
 configure_uploads(app, IMAGE_SET)
 api = Api(app)
+migrate = Migrate(app, db)  # Establishes a link between app and the remote database
 
 
 @app.errorhandler(ValidationError)
@@ -133,7 +135,8 @@ api.add_resource(UserLogin, "/login")
 api.add_resource(UserLogout, "/logout")
 api.add_resource(TokenRefresh, "/refresh")
 
+db.init_app(app)
+
 if __name__ == "__main__":
-    db.init_app(app)
     ma.init_app(app)  # tells marshmallow that it should be communicating with this flask app
     app.run(port=5000, debug=True)

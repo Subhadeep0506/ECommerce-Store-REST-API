@@ -8,3 +8,4 @@ database/data.db
 resources/__pycache__
 model/__pycache__
 static/images
+migrations

@@ -103,7 +103,7 @@ class UserLogin(Resource):
         # this here is what authenticate() function used to do
         if user and safe_str_cmp(user.password, user_data.password):
             confirmation = user.most_recent_confirmation
-            print("user resource: ", confirmation.id)
+            # print("user resource: ", confirmation.id)
             # Check if user is activated
             if confirmation and confirmation.confirmed:
                 # create access and refresh tokens
