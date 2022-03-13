@@ -25,3 +25,23 @@ python app.py
 ## IMPORTANT
 
 Make sure to delete the `data.db` file from `database` directory before fresh run.
+
+## Steps to database migration
+
+1. ```
+   flask db init
+   ```
+
+   To initiate migration process.
+
+2. Edit the `alembic.ini` and `env.py` according to requirements.
+3. ```
+   flask db migrate
+   ```
+   To create migration instance.
+4. Edit the version file accordingly.
+5. ````
+   flask db upgrade
+       ```
+   To commit the upgrade.
+   ````
