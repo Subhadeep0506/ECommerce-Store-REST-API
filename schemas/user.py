@@ -17,7 +17,7 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
             "confirmation",
         )  # makes 'id' field dump_only.
 
-    @pre_dump
+    @pre_dump(pass_many=True)
     def _pre_dump(self, user: UserModel, **kwargs):  # Here user is the user that will be turned to json
         user.confirmation = [user.most_recent_confirmation]
         return user

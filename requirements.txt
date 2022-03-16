@@ -8,4 +8,5 @@ Marshmallow-SQLAlchemy
 Python-Dotenv
 Flask-Uploads
 Flask-Migrate
+Flask-OAuthlib
 psycopg2-binary

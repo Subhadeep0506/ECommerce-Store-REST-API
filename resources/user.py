@@ -30,7 +30,8 @@ USER_LOGGED_OUT = "User <id={user_id}> successfully logged out."
 NOT_CONFIRMED_ERROR = "You have not confirmed registration, please check your email <{}>."
 FAILED_TO_CREATE = "Internal server error. Failed to create user."
 SUCCESS_REGISTER_MESSAGE = "Account created successfully, an email with an activation link has been sent to your email address, please check."
-
+USER_NOT_FOUND = "User not found."
+USER_PASSWORD_UPDATED = "User password has been updated successfully."
 
 # New user registration class
 class UserRegister(Resource):
@@ -136,3 +137,20 @@ class TokenRefresh(Resource):
         new_token = create_access_token(identity=current_user, fresh=False)  # fresh=Flase means that user have logged in days ago.
 
         return {"access_token": new_token}, 200
+
+
+class SetPassword(Resource):
+    @classmethod
+    @jwt_required(fresh=True)
+    def post(cls):
+        user_json = request.get_json()
+        user_data = user_schema.load(user_json)  # username and new password
+        user = UserModel.find_by_username(user_data.username)
+
+        if not user:
+            return {"message": USER_NOT_FOUND}, 400
+
+        user.password = user_data.password
+        user.save_to_database()
+
+        return {"message": USER_PASSWORD_UPDATED}, 201

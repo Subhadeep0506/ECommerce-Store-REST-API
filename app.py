@@ -6,27 +6,31 @@ from flask_migrate import Migrate
 from marshmallow import ValidationError
 from dotenv import load_dotenv
 
+load_dotenv(".env", verbose=True)
+
 from ma import ma
+from oauth import oauth
 from resources.user import (
     UserRegister,
     User,
     UserLogin,
     UserLogout,
     TokenRefresh,
+    SetPassword,
 )
 from resources.item import Item, ItemList
 from resources.store import Store, StoreList
 from resources.confirmation import Confirmation, ConfirmationByUser
 from resources.image import ImageUpload, Image, AvatarUpload, Avatar
+from resources.github_login import GithubLogin, GithubAuthorize
 from libs.image_helper import IMAGE_SET
 from blacklist import BLACKLIST
 from database import db
 
 app = Flask(__name__)
-load_dotenv(".env", verbose=True)
 # .env has to be loaded manually here beacuse it is loaded automatically when app runs.
 # But here it will not load automatically as the app has not started at the point
-app.config.from_object("default_config")    # Loads the default_config.py file
+app.config.from_object("default_config")  # Loads the default_config.py file
 app.config.from_envvar("APPLICATION_SETTINGS")
 patch_request_class(app, 10 * 1024 * 1024)  # Used to limit the max size of image that can be uploaded, here: 10mb
 configure_uploads(app, IMAGE_SET)
@@ -134,9 +138,13 @@ api.add_resource(User, "/user/<int:user_id>")
 api.add_resource(UserLogin, "/login")
 api.add_resource(UserLogout, "/logout")
 api.add_resource(TokenRefresh, "/refresh")
+api.add_resource(SetPassword, "/user/password")
+api.add_resource(GithubLogin, "/login/github")
+api.add_resource(GithubAuthorize, "/login/github/authorized", endpoint="github.authorized")
 
 db.init_app(app)
 
 if __name__ == "__main__":
     ma.init_app(app)  # tells marshmallow that it should be communicating with this flask app
+    oauth.init_app(app)
     app.run(port=5000, debug=True)
