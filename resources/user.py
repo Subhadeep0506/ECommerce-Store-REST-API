@@ -12,7 +12,6 @@ from flask_jwt_extended import (
 import traceback
 from flask import request
 
-
 from models.user import UserModel
 from schemas.user import UserSchema
 from blacklist import BLACKLIST

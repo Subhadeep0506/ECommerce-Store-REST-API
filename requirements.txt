@@ -1,4 +1,4 @@
-Flask
+Flask<2.2.0
 Flask-RESTful
 Flask-JWT-Extended
 Flask-SQLAlchemy
@@ -10,3 +10,4 @@ Flask-Uploads
 Flask-Migrate
 Flask-OAuthlib
 psycopg2-binary
+Werkzeug==2.0.0
